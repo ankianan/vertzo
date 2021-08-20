@@ -1,0 +1,10 @@
+{
+  "name": "vertzo",
+  "version": "1.0.0",
+  "description": "An app to covert timezone",
+  "main": "index.js",
+  "author": "Ankit Anand",
+  "license": "MIT",
+  "private": true,
+  "workspaces": ["ui/*"]
+}

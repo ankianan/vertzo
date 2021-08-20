@@ -1,0 +1,16 @@
+{
+  "name": "@vertzo/app",
+  "version": "1.0.0",
+  "description": "Application",
+  "main": "index.js",
+  "author": "Ankit Anand",
+  "license": "MIT",
+  "dependencies": {
+    "lit": "^2.0.0-rc.3",
+    "webpack": "^5.51.1",
+    "webpack-cli": "^4.8.0"
+  },
+  "scripts": {
+    "build": "npx webpack --config webpack.config.js"
+  }
+}
