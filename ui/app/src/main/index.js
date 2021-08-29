@@ -4,14 +4,19 @@ import './components/vertzo-timezone-selector/TimezoneSelector';
 export class Vertzo extends LitElement {
     static get styles() {
         return css`
+        :host {
+            display:block;
+            height: 100%;
+        }
         .row {
             display: flex;
             margin: 5px 0;
             border: solid 1px;
         }
-        .item { 
+        .col { 
             width: 100%;
-            padding: 10px 5px;
+            padding: 10px 0;
+            margin: 0px 10px;
             box-sizing: border-box;
         }
         `;
@@ -27,20 +32,36 @@ export class Vertzo extends LitElement {
     constructor() {
         super();
 
+        this._timezoneOffset = new Date().getTimezoneOffset();
+
         /**
          *
          * @type {{timezone: Timezone}[]}
          * @private
          */
-        this._list = Object.keys(Timezones).map(offset=>({
-            timezone: Timezones[offset]
-        }));
+        this._list = Object.keys(Timezones)
+            .filter(offset=>parseInt(offset) !== this._timezoneOffset)
+            .map(offset=>Timezones[offset]);
 
-        this._time = new Date().getTime();
-        setInterval(()=>{
-            this._time = new Date().getTime();
-        },1000)
-        this._timezoneOffset = new Date().getTimezoneOffset();
+        var now = new Date();
+        //now.setMinutes(0);
+        now.setSeconds(0);
+        this.setTime(now.getTime());
+    }
+
+    setTime(time) {
+        this._time = time;
+    }
+
+    setHoursAndMinutes(){
+        return (event)=>{
+            const date = new Date(this._time);
+            const hours = parseInt(event.target.valueAsNumber);
+            const minutes = event.target.valueAsNumber  - hours
+            date.setHours(hours);
+            date.setMinutes(minutes*60);
+            this.setTime(date.getTime())
+        }
     }
 
     /**
@@ -65,18 +86,45 @@ export class Vertzo extends LitElement {
 
     render() {
         return html`
-            <div>
-                ${this._list.map(item=>
-                    html`
-                        <div class="row">
-                            <vertzo-timezone-selector class="item" value="${item.timezone.offset}"></vertzo-timezone-selector>
-                            <span class="item">${this.getDateByTimezone(item.timezone).toLocaleTimeString()}</span>
-                            <span class="item">${this.getDateByTimezone(item.timezone).toLocaleDateString()}</span>
-                        </div>
-                    `
-                )}
+            <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%">
+                <div>
+                    ${this._list.map(item=>this.renderRow(item))}
+                </div>
+                ${this.renderRow(Timezones[this._timezoneOffset], this.renderHourSelector())}
             </div>
         `;
+    }
+
+    renderRow(item, hourSelector = null) {
+        return html`
+                        <div class="row" style="display: flex; justify-content: space-between; align-items: center">
+                            <vertzo-timezone-selector class="col" value="${item.offset}"></vertzo-timezone-selector>
+                            <div class="col">
+                                ${hourSelector}
+                            </div>
+                            <div class="col" style="display: flex; flex-direction: column; justify-content: space-between; text-align: end">
+                                <span style="font-size: 1.5rem">${(this.getFormattedTimeString(item))}</span>
+                                <span>${this.getDateByTimezone(item).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    `;
+    }
+
+    getFormattedTimeString(item) {
+        const date = this.getDateByTimezone(item)
+        const HH = `0${date.getHours()}`.slice(-2);
+        const MM = `0${date.getMinutes()}`.slice(-2);
+        return `${HH}:${MM}`
+    }
+
+    renderHourSelector() {
+        return html`
+            <input type="range" list="tickmarks" @input="${this.setHoursAndMinutes()}" min="0" max="23" step=".5">
+                
+            <datalist id="tickmarks">
+              ${Array.from({length:48}, (val, index)=>(index/2)).map(val=>html`<option value="${val}"></option>`)}
+            </datalist>
+        `
     }
 }
 
