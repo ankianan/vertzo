@@ -1,5 +1,4 @@
 /**
- * @typedef {{name: string, offset: number}} Timezone
  * @type {{"-330": Timezone}}
  */
 export const Timezones = {
