@@ -14,18 +14,50 @@ export class Vertzo extends LitElement {
             display:block;
             height: 100%;
         }
-        .row {
+        .header {
+            margin: 0;
+            margin-left: 1rem;
+            padding: .67em 0;
+            font-size: 2.5rem;
+        }
+        .flex-row {
             display: flex;
-            border-bottom: dashed 1px;
-            justify-content: space-between; align-items: center
+            align-items: baseline;
         }
-        .row:first-child{
-            border-top: dashed 1px;
+        
+        .flex-col { 
+            display: flex; 
+            flex-direction: column;
         }
-        .col { 
-            padding: 10px 0;
-            margin: 0px 5px;
-            box-sizing: border-box;
+        .list {
+            max-height: calc(100%-2.5rem);
+            overflow-y: scroll;
+            overflow-x: hidden;
+            padding:0;
+            margin:0;
+            list-style-type: none;
+            
+        }
+        .list-item {
+            padding: 0rem 1rem 1.5rem;
+            margin: 0 0 1.5rem 0;
+            border-bottom: 1px solid;
+            
+            line-height: 1.5rem;
+        }
+        .list-item--title {
+            white-space: nowrap;
+        }
+        
+        .time-hm {
+            font-size: 1.75rem;
+            margin-right: 7px
+        }
+        .time-zone {
+            font-size: 1.25rem;
+        }
+        .time-date {
+            font-size: 1rem
         }
         `;
     }
@@ -58,6 +90,43 @@ export class Vertzo extends LitElement {
 
     setTime(time) {
         this._time = time;
+    }
+
+    render() {
+        let currentTimezone = Timezones[this._timezoneOffset];
+        return html`
+            <h1 class="header">
+                Vertzo
+            </h1>
+            <ul class="list">
+                ${this._list.map(timezone=>{
+            return html`<li class="list-item">
+                                ${this.renderRow(timezone, this.renderTimeString(timezone))}
+                            </li>`
+        })}
+                <li class="list-item">
+                    ${this.renderRow(currentTimezone, this.renderTimeString(currentTimezone))}
+                </li>
+            </ul>    
+        `;
+    }
+
+    /**
+     *
+     * @param item
+     * @param timeSlot
+     * @return {*}
+     */
+    renderRow(item, timeSlot) {
+        return html`
+            <div class="flex-col">
+                <div class="flex-row list-item--title">
+                    <span class="list-item--title time-hm">${timeSlot}</span>
+                    <span class="time-zone">${item.name}</span>
+                </div>
+                <span class="time-date">${this.getDateByTimezone(this._timezoneOffset, item.offset).toLocaleDateString()}</span>
+            </div>
+        `;
     }
 
     /**
@@ -115,43 +184,11 @@ export class Vertzo extends LitElement {
         const HH = `0${(this.convertHrsTo12HrFormat(date.getHours()))}`.slice(-2);
         const MM = `0${date.getMinutes()}`.slice(-2);
         const AM_PM = date.getHours()>11?'PM':'AM';
-        return `${HH}:${MM} ${AM_PM}`;
+        return `${HH}:${MM} ${AM_PM.toLowerCase()}`;
     }
 
     convertHrsTo12HrFormat(hours) {
         return hours > 12 ? hours % 12 : hours;
-    }
-
-    render() {
-        let currentTimezone = Timezones[this._timezoneOffset];
-        return html`
-            <div style="display: flex; flex-direction: column; justify-content: flex-end; height: 100%">
-                ${this._list.map(timezone=>this.renderRow(timezone, this.renderHourSelector(timezone), this.renderTimeString(timezone)))}
-                ${this.renderRow(currentTimezone, this.renderHourSelector(currentTimezone), this.renderTimeString(currentTimezone))}
-            </div>
-        `;
-    }
-
-    /**
-     *
-     * @param item
-     * @param hourSelectorSlot
-     * @param timeSlot
-     * @return {*}
-     */
-    renderRow(item, hourSelectorSlot = null, timeSlot) {
-        return html`
-                        <div class="row">
-                            <vertzo-timezone-selector class="col" value="${item.offset}"></vertzo-timezone-selector>
-                            <div class="col">
-                                ${hourSelectorSlot}
-                            </div>
-                            <div class="col" style="display: flex; flex-direction: column; justify-content: space-between; text-align: end">
-                                ${timeSlot}
-                                <span>${this.getDateByTimezone(this._timezoneOffset, item.offset).toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                    `;
     }
 
     /**
@@ -195,7 +232,7 @@ export class Vertzo extends LitElement {
      * @return {*}
      */
     renderTimeString(time) {
-        return html`<span style="font-size: 1.5rem; white-space: nowrap">${(this.getFormattedTimeString(time))}</span>`;
+        return html`${this.getFormattedTimeString(time)}`;
     }
 }
 
