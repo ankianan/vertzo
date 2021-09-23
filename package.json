@@ -6,5 +6,10 @@
   "author": "Ankit Anand",
   "license": "MIT",
   "private": true,
-  "workspaces": ["ui/*"]
+  "workspaces": ["ui/*"],
+  "scripts": {
+    "build": "yarn workspace @vertzo/app build",
+    "serve": "cd ui/app/dist && http-server"
+
+  }
 }

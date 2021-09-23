@@ -3,63 +3,13 @@
  * @typedef {{name: string, offset: TimezoneOffset}} Timezone
  */
 
-import {html, css, LitElement} from 'lit';
-import {getTimezone, Timezones} from "./data/Timezones";
+import {html, unsafeCSS, LitElement} from 'lit';
+import {Timezones} from "./data/Timezones";
 import './components/vertzo-timezone-selector/TimezoneSelector';
-import {live} from 'lit/directives/live.js';
+import styles from './index.css';
 export class Vertzo extends LitElement {
     static get styles() {
-        return css`
-        :host {
-            display:block;
-            height: 100%;
-        }
-        .header {
-            margin: 0;
-            margin-left: 1rem;
-            padding: .67em 0;
-            font-size: 2.5rem;
-        }
-        .flex-row {
-            display: flex;
-            align-items: baseline;
-        }
-        
-        .flex-col { 
-            display: flex; 
-            flex-direction: column;
-        }
-        .list {
-            max-height: calc(100%-2.5rem);
-            overflow-y: scroll;
-            overflow-x: hidden;
-            padding:0;
-            margin:0;
-            list-style-type: none;
-            
-        }
-        .list-item {
-            padding: 0rem 1rem 1.5rem;
-            margin: 0 0 1.5rem 0;
-            border-bottom: 1px solid;
-            
-            line-height: 1.5rem;
-        }
-        .list-item--title {
-            white-space: nowrap;
-        }
-        
-        .time-hm {
-            font-size: 1.75rem;
-            margin-right: 7px
-        }
-        .time-zone {
-            font-size: 1.25rem;
-        }
-        .time-date {
-            font-size: 1rem
-        }
-        `;
+        return unsafeCSS(styles)
     }
 
     static get properties() {
@@ -95,19 +45,25 @@ export class Vertzo extends LitElement {
     render() {
         let currentTimezone = Timezones[this._timezoneOffset];
         return html`
-            <h1 class="header">
-                Vertzo
-            </h1>
+            <header>
+                <h1 class="header">
+                    Vertzo
+                </h1>
+            </header>
             <ul class="list">
                 ${this._list.map(timezone=>{
             return html`<li class="list-item">
-                                ${this.renderRow(timezone, this.renderTimeString(timezone))}
-                            </li>`
-        })}
+                            ${this.renderRow(timezone, this.renderTimeString(timezone))}
+                        </li>`
+                })}
                 <li class="list-item">
                     ${this.renderRow(currentTimezone, this.renderTimeString(currentTimezone))}
                 </li>
             </ul>    
+            <aside>
+                <button @click="${this.changeDate(30)}">›</button>
+                <button @click="${this.changeDate(-30)}">‹</button>
+            </aside>
         `;
     }
 
@@ -129,27 +85,9 @@ export class Vertzo extends LitElement {
         `;
     }
 
-    /**
-     *
-     * @param {Timezone} timezone
-     * @return {function(*): void}
-     */
-    setHoursAndMinutes(timezone){
-        return (event)=>{
-            const hours = parseInt(event.target.valueAsNumber);
-            const minutes = event.target.valueAsNumber  - hours;
-
-            //Convert local timezone selected date to target timezone
-            const dateInTargetTimezone = this.getDateByTimezone(this._timezoneOffset, timezone.offset);
-
-            //Modify date
-            dateInTargetTimezone.setHours(hours);
-            dateInTargetTimezone.setMinutes(minutes*60);
-
-            //Convert date in target timezone to local timezone
-            const dateInLocalTimezone = this.getDateByTimezone(timezone.offset, this._timezoneOffset, dateInTargetTimezone.getTime())
-
-            this.setTime(dateInLocalTimezone.getTime())
+    changeDate( diffInMinutes = 30) {
+        return () => {
+            this.setTime(this.getTime() + diffInMinutes * 60000);
         }
     }
 
@@ -191,23 +129,8 @@ export class Vertzo extends LitElement {
         return hours > 12 ? hours % 12 : hours;
     }
 
-    /**
-     * @link https://lit-html.polymer-project.org/guide/template-reference
-     * @param {Timezone} timezone
-     * @return {*}
-     */
-    renderHourSelector(timezone) {
-        return html`
-            <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-                <button  @click="${this.changeDate(-30)}">DOWN</button>
-                <button @click="${this.changeDate(30)}">UP</button>
-            </div>
-            <input style="width: 100%;" type="range" list="tickmarks" .value="${this.getDateAsSliderValue(timezone)}" @input="${this.setHoursAndMinutes(timezone)}" min="0" max="23.5" step=".5">
-        `
-    }
-
     changeDate(addMinutes){
-        return ()=>{
+        return (event)=>{
             const date = new Date(this._time);
             date.setMinutes(date.getMinutes() + addMinutes);
             this.setTime(date.getTime());

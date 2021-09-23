@@ -3,5 +3,17 @@
   "short_name": "Vertzo",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "rgba(0, 196, 255, 0.61)"
+  "background_color": "#00c4ff",
+  "theme_color": "#00c4ff",
+  "icons": [
+    {
+      "src": "android-chrome-192x192.png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "android-chrome-512x512.png",
+      "sizes": "512x512"
+    }
+  ]
+
 }
