@@ -129,31 +129,6 @@ export class Vertzo extends LitElement {
         return hours > 12 ? hours % 12 : hours;
     }
 
-    changeDate(addMinutes){
-        return (event)=>{
-            const date = new Date(this._time);
-            date.setMinutes(date.getMinutes() + addMinutes);
-            this.setTime(date.getTime());
-        }
-    }
-
-    /**
-     *
-     * @param timezone
-     * @return {number}
-     */
-    getDateAsSliderValue(timezone) {
-        const date = this.getDateByTimezone(this._timezoneOffset, timezone.offset);
-        const minutes = date.getMinutes() > 30 ? 0.5:0;
-        let hours = date.getHours();
-        return hours + minutes;
-    }
-
-    /**
-     *
-     * @param {Timezones} item
-     * @return {*}
-     */
     renderTimeString(time) {
         return html`${this.getFormattedTimeString(time)}`;
     }
