@@ -21,6 +21,8 @@
     "html-webpack-plugin": "^5.3.2",
     "postcss": "^8.3.7",
     "postcss-loader": "^6.1.1",
+    "sass": "^1.42.1",
+    "sass-loader": "^12.1.0",
     "workbox-webpack-plugin": "^6.3.0"
   }
 }

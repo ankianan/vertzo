@@ -3,10 +3,11 @@
  * @typedef {{name: string, offset: TimezoneOffset}} Timezone
  */
 
-import {html, unsafeCSS, LitElement} from 'lit';
+import {html, LitElement, unsafeCSS} from 'lit';
 import {Timezones} from "./data/Timezones";
 import './components/vertzo-timezone-selector/TimezoneSelector';
 import styles from './index.css';
+
 export class Vertzo extends LitElement {
     static get styles() {
         return unsafeCSS(styles)
@@ -35,20 +36,29 @@ export class Vertzo extends LitElement {
 
         const now = new Date();
         now.setSeconds(0);
+        now.setMinutes(0);
         this.setTime(now.getTime());
     }
 
+    /**
+     * @param {Number} time
+     */
     setTime(time) {
         this._time = time;
+    }
+
+    /**
+     * @return {Number}
+     */
+    getTime() {
+        return this._time;
     }
 
     render() {
         let currentTimezone = Timezones[this._timezoneOffset];
         return html`
             <header>
-                <h1 class="header">
-                    Vertzo
-                </h1>
+                <h1>Vertzo</h1>
             </header>
             <ul class="list">
                 ${this._list.map(timezone=>{
@@ -61,28 +71,37 @@ export class Vertzo extends LitElement {
                 </li>
             </ul>    
             <aside>
-                <button @click="${this.changeDate(30)}">›</button>
                 <button @click="${this.changeDate(-30)}">‹</button>
+                <button @click="${this.changeDate(30)}">›</button>
             </aside>
         `;
     }
 
     /**
      *
-     * @param item
+     * @param {Timezone} timezone
      * @param timeSlot
      * @return {*}
      */
-    renderRow(item, timeSlot) {
+    renderRow(timezone, timeSlot) {
         return html`
             <div class="flex-col">
-                <div class="flex-row list-item--title">
-                    <span class="list-item--title time-hm">${timeSlot}</span>
-                    <span class="time-zone">${item.name}</span>
+                <div class="flex-row" style="justify-content: space-between; flex-wrap: wrap">
+                    <span class="time-hm">${timeSlot}</span>
+                    <span class="time-zone">${timezone.name}</span>
+                    <span class="time-date">${this.getDateByTimezone(timezone.offset).toLocaleDateString()}</span>
                 </div>
-                <span class="time-date">${this.getDateByTimezone(this._timezoneOffset, item.offset).toLocaleDateString()}</span>
             </div>
         `;
+    }
+
+    /**
+     *
+     * @param {Timezone} timezone
+     * @return {*}
+     */
+    renderTimeString(timezone) {
+        return html`${this.getFormattedTimeString(timezone)}`;
     }
 
     changeDate( diffInMinutes = 30) {
@@ -92,17 +111,30 @@ export class Vertzo extends LitElement {
     }
 
     /**
-     * Returns time as HH:MM for the timezone
-     * @param {TimezoneOffset} sourceTimezoneOffset
-     * @param {TimezoneOffset} targetTimezoneOffset
+     * Returns formatted Time String in a timezone
+     * @param {Timezone} timezone
+     * @return {string}
      */
-    getDateByTimezone(sourceTimezoneOffset, targetTimezoneOffset, sourceTimeStamp = this._time) {
+    getFormattedTimeString(timezone) {
+        const date = this.getDateByTimezone(timezone.offset)
+        const HH = `0${(this.convertHrsTo12HrFormat(date.getHours()))}`.slice(-2);
+        const MM = `0${date.getMinutes()}`.slice(-2);
+        const AM_PM = date.getHours()>11?'PM':'AM';
+        return `${HH}:${MM} ${AM_PM}`;
+    }
+
+    /**
+     * Return date for this._time as per target timezone offset
+     * @param {TimezoneOffset} targetTimezoneOffset
+     * @return {Date}
+     */
+    getDateByTimezone(targetTimezoneOffset) {
         let date;
-        if(targetTimezoneOffset === sourceTimezoneOffset){
-            date = new Date(sourceTimeStamp);
+        if(targetTimezoneOffset === this._timezoneOffset){
+            date = new Date(this.getTime());
         } else {
             // Moving to UTC timezone
-            const utcTime = sourceTimeStamp + (sourceTimezoneOffset * 60 * 1000);
+            const utcTime = this.getTime() + (this._timezoneOffset * 60 * 1000);
 
             // Moving from UTC timezone
             const targetTimezoneTime = utcTime + (-(targetTimezoneOffset) * 60 * 1000);
@@ -114,23 +146,11 @@ export class Vertzo extends LitElement {
 
     /**
      *
-     * @param {Timezone} item
-     * @return {string}
+     * @param {Number} hours
+     * @return {number|*}
      */
-    getFormattedTimeString(item) {
-        const date = this.getDateByTimezone(this._timezoneOffset, item.offset)
-        const HH = `0${(this.convertHrsTo12HrFormat(date.getHours()))}`.slice(-2);
-        const MM = `0${date.getMinutes()}`.slice(-2);
-        const AM_PM = date.getHours()>11?'PM':'AM';
-        return `${HH}:${MM} ${AM_PM.toLowerCase()}`;
-    }
-
     convertHrsTo12HrFormat(hours) {
-        return hours > 12 ? hours % 12 : hours;
-    }
-
-    renderTimeString(time) {
-        return html`${this.getFormattedTimeString(time)}`;
+        return (hours > 12)  ? hours % 12 : ((hours === 0)?12: hours);
     }
 }
 

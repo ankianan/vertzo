@@ -9,7 +9,7 @@
   "workspaces": ["ui/*"],
   "scripts": {
     "build": "yarn workspace @vertzo/app build",
-    "serve": "cd ui/app/dist && http-server"
+    "serve": "http-server ui/app/dist  -S -C cert.pem"
 
   }
 }

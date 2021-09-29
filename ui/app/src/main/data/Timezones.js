@@ -11,12 +11,3 @@ export const Timezones = {
         offset: 420
     }
 }
-
-/**
- *
- * @param timezoneOffset
- * @return {Timezone}
- */
-export function getTimezone(timezoneOffset) {
-    return Timezones[timezoneOffset];
-}
