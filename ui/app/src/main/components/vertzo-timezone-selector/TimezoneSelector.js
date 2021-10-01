@@ -1,5 +1,5 @@
 import {html, css, LitElement} from 'lit';
-import {Timezones} from "../../data/Timezones";
+import {TimezoneMap} from "../../data/TimezoneMap";
 
 
 export class TimezoneSelector extends LitElement {
@@ -24,8 +24,8 @@ export class TimezoneSelector extends LitElement {
     render() {
         return html`
             <select>
-                ${Object.keys(Timezones)
-                .map(offset=>Timezones[offset])
+                ${Object.keys(TimezoneMap)
+                .map(offset=>TimezoneMap[offset])
                 .map(timezone=>
                     html`
                         <option value="${timezone.offset}" ?selected="${timezone.offset == this.value}">

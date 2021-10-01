@@ -8,6 +8,7 @@
   "dependencies": {
     "lit": "^2.0.0-rc.3",
     "postcss": "^8.3.7",
+    "timezones-list": "^3.0.1",
     "webpack": "^5.51.1",
     "webpack-cli": "^4.8.0"
   },

@@ -1,12 +1,8 @@
-/**
- * @typedef {number} TimezoneOffset
- * @typedef {{name: string, offset: TimezoneOffset}} Timezone
- */
-
 import {html, LitElement, unsafeCSS} from 'lit';
-import {Timezones} from "./data/Timezones";
+import {TimezoneMap, Timezones} from "./data/TimezoneMap";
 import './components/vertzo-timezone-selector/TimezoneSelector';
 import styles from './index.css';
+import { live } from 'lit/directives/live.js';
 
 export class Vertzo extends LitElement {
     static get styles() {
@@ -17,6 +13,8 @@ export class Vertzo extends LitElement {
         return {
             _list: {type: Array, state: true},
             _time: {type: Number, state: true},
+            _hideSelectTimezone : {type: Boolean, state: true},
+            _renames :{type: Object, state: true}
         }
     }
 
@@ -30,14 +28,15 @@ export class Vertzo extends LitElement {
          * @type {Timezone[]}
          * @private
          */
-        this._list = Object.keys(Timezones)
-            .filter(offset=>parseInt(offset) !== this._timezoneOffset)
-            .map(offset=>Timezones[offset]);
+        this._list = [];
 
         const now = new Date();
         now.setSeconds(0);
         now.setMinutes(0);
         this.setTime(now.getTime());
+
+        this._hideSelectTimezone = true;
+        this._renames = {}
     }
 
     /**
@@ -55,44 +54,97 @@ export class Vertzo extends LitElement {
     }
 
     render() {
-        let currentTimezone = Timezones[this._timezoneOffset];
+        let currentTimezone = TimezoneMap[this._timezoneOffset];
         return html`
             <header>
                 <h1>Vertzo</h1>
             </header>
+            <main>
             <ul class="list">
-                ${this._list.map(timezone=>{
-            return html`<li class="list-item">
-                            ${this.renderRow(timezone, this.renderTimeString(timezone))}
-                        </li>`
+                ${this._list.map((timezone, index)=>{
+                    return html`<li class="list-item">
+                                ${this.renderRow(this.renderTimeString(timezone), timezone, index)}
+                            </li>`
                 })}
-                <li class="list-item">
-                    ${this.renderRow(currentTimezone, this.renderTimeString(currentTimezone))}
-                </li>
-            </ul>    
+            </ul>
+            <button @click="${(this.addNewTimezoneToList())}">Add more</button>
+                
+            </main>
+                
             <aside>
                 <button @click="${this.changeDate(-30)}">‹</button>
                 <button @click="${this.changeDate(30)}">›</button>
+                
             </aside>
         `;
     }
 
+    addNewTimezoneToList() {
+        return ()=>{
+            this._list = [...this._list, TimezoneMap[this._timezoneOffset]]
+        }
+    }
+
     /**
      *
-     * @param {Timezone} timezone
      * @param timeSlot
+     * @param {Timezone} timezone
      * @return {*}
      */
-    renderRow(timezone, timeSlot) {
+    renderRow(timeSlot, timezone, index) {
         return html`
-            <div class="flex-col">
-                <div class="flex-row" style="justify-content: space-between; flex-wrap: wrap">
-                    <span class="time-hm">${timeSlot}</span>
-                    <span class="time-zone">${timezone.name}</span>
+            <div class="flex-row" style="justify-content: space-between; flex-wrap: nowrap; gap: 1rem">
+                <div class="flex-col">
+                    <span class="time-hm" style="white-space: nowrap">${timeSlot}</span>
                     <span class="time-date">${this.getDateByTimezone(timezone.offset).toLocaleDateString()}</span>
                 </div>
+                <div class="time-zone" style="display: flex; flex-wrap: nowrap; gap: 3px">
+                    <span class="single-line" contenteditable="true" @blur="${(this.renameTimezone(timezone))}" .textContent="${live(this.getTimezoneName(timezone))}"></span>
+                    <div>
+                        ${this._hideSelectTimezone
+                            ? html`<span @click="${(this.hideSelectTimezone(false))}">${timezone.utc}</span>`
+                            : html`<select @change="${this.onTimezoneChange(this.updateTimezoneAtIndex(index))}" @focusout="${this.hideSelectTimezone(true)}">
+                                                       ${Timezones.map((_timezone, index)=>html`<option value="${index}" ?selected="${_timezone.name === timezone.name}">${_timezone.utc}</option>`)}
+                                                    </select>`
+                        }
+                    </div>
+                </div>
             </div>
+            
         `;
+    }
+
+    renameTimezone(timezone) {
+        return event=>{
+            const newValue = event.target.textContent || timezone.tzCode;
+            this._renames = {
+                ...this._renames,
+                [timezone.offset] : newValue
+            };
+        }
+    }
+
+    getTimezoneName(timezone) {
+        return this._renames[timezone.offset] || timezone.tzCode;
+    }
+
+    updateTimezoneAtIndex(listIndex) {
+        return (selectedTimezoneIndex) => {
+            this._list = [...this._list.map((_timezone, _listIndex)=>{
+                if(_listIndex === listIndex){
+                    return  Timezones[selectedTimezoneIndex];
+                }
+                return _timezone;
+            })];
+        };
+    }
+
+    onTimezoneChange(updateTimezone) {
+        return event=>updateTimezone(event.target.value);
+    }
+
+    hideSelectTimezone(value) {
+        return () => this._hideSelectTimezone = value;
     }
 
     /**
